@@ -24,32 +24,31 @@ contract Domainoor is iDomainoor, AccessControl {
     // ===================ENDPOINT===================
 
     function setDomainOwner(bytes32 _domain, address _owner) external override {
+        require(_owner != address(0), "Domainoor: Invalid address");
         DomainObject storage obj = domainObjects[_domain];
 
-        bool isNewDomain = obj.creationDate == 0;
+        bool isNewDomain = obj.creationDate == 0 || obj.owner == address(0); // || for safety
         bool isEndpoint = hasRole(ENDPOINT_ROLE, msg.sender);
-        bool isDomainOwner = obj.owner != 0 && obj.owner == msg.sender;
+        bool isDomainOwner = obj.owner == msg.sender;
 
         if (isEndpoint) {
-            // Endpoint can only change domain owner if timelock is not expired
-            if (isNewDomain) {
+            if (!isNewDomain) 
+                // Endpoint can only change domain owner if timelock is not expired
                 require(block.timestamp <= obj.creationDate + timelock, "Domainoor: Endpoint's timelock is expired");
-            else // always works
+            else
+                // Endpoints can create new domains at any time.
+                // We need to mark that this domain has been created for the first time.
+                domainObjects[_domain].creationDate = block.timestamp;
 
         } else if (isDomainOwner) {
-            // Domain owner can change domain owner at any time
-            require(obj.creationDate != 0, "Domainoor: No such domain");
+            // Domain owners can change the owner at any time.
+            require(!isNewDomain, "Domainoor: No such domain"); // sanity check
 
         } else {
             revert("Domainoor: Not the domain owner or endpoint");
         }
 
-        require(_owner != address(0), "Domainoor: Invalid address");
-        require(domainObjects[_domain].owner == address(0)
-            && domainObjects[_domain].creationDate == 0, "Domainoor: Domain already registered");
-
         domainObjects[_domain].owner = _owner;
-        domainObjects[_domain].creationDate = block.timestamp;
     }
 
     // ===================SETTERS===================
