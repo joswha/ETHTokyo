@@ -1,4 +1,4 @@
-pragma soidity ^0.9.0;
+pragma soidity ^0.8.13;
 
 import "./iDomainoor.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";

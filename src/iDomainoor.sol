@@ -1,11 +1,11 @@
-pragma solidity ^0.9.0;
+pragma solidity ^0.8.13;
 
 interface iDomainoor {
 
     struct DomainObject {
-        address[] contracts,
-        uint256 state, // 0 - Unregistered, 1 - Registered, 2 - Suspended, 3 - Deleted
-        uint256 creationDate
+        address[] contracts;
+        uint256 state; // 0 - Unregistered, 1 - Registered, 2 - Suspended, 3 - Deleted
+        uint256 creationDate;
     }
      
     function setDomainOwner(bytes32 memory _domain, address _owner) external returns (bool);
