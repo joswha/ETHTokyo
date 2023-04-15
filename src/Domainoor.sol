@@ -6,11 +6,13 @@ import "lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 
 contract Domainoor is iDomainoor, AccessControl {
     mapping(bytes32 => DomainObject) public domainObjects;
+
     uint256 public immutable timelock;
     bytes32 public constant ENDPOINT_ROLE = "0x1337";
 
     modifier onlyDomainOwner(bytes32 _domain) {
-        require(domainObjects[_domain].owner == msg.sender, "Domainoor: Not the domain owner");
+        require(domainObjects[_domain].owner == msg.sender,
+            "Domainoor: Not the domain owner");
         _;
     }
 
@@ -34,7 +36,8 @@ contract Domainoor is iDomainoor, AccessControl {
         if (isEndpoint) {
             if (!isNewDomain) {
                 // Endpoint can only change domain owner if timelock is not expired
-                require(block.timestamp <= obj.creationDate + timelock, "Domainoor: Endpoint's timelock is expired");
+                require(block.timestamp <= obj.creationDate + timelock,
+                    "Domainoor: Endpoint's timelock is expired");
             } else {
                 // Endpoints can create new domains at any time.
                 // We need to mark that this domain has been created for the first time.
@@ -50,37 +53,39 @@ contract Domainoor is iDomainoor, AccessControl {
         obj.owner = _owner;
     }
 
+    function setTrustedContracts(bytes32 _domain, address[] memory _contracts) external override onlyDomainOwner(_domain) {
+        DomainObject storage obj = domainObjects[_domain];
+        for (uint256 i = 0; i < _contracts.length; i++) {
+            obj.contracts[_contracts[i]] = true;
+        }
+    }
+
+    function setTrustedContract(bytes32 _domain, address _contract, bool _trusted) external override {
+        DomainObject storage obj = domainObjects[_domain];
+        obj.contracts[_contract] = _trusted;
+    }
+
     // ====================EVAL=====================
 
     function checkContract(bytes32 _domain, address _to) external view override returns (Result) {
-        DomainObject memory obj = domainObjects[_domain];
+        DomainObject storage obj = domainObjects[_domain];
         if (obj.creationDate == 0) {
             return Result.NOT_REGISTERED;
         }
 
-        for (uint256 i = 0; i < obj.contracts.length; i++) {
-            if (obj.contracts[i] == _to) {
-                return Result.REGISTERED_AND_MATCH;
-            }
+        // No worries of this running out of gas.
+        // The actor who could block this function would also be able to simply empty the "trusted contracts" array.
+        // Also, it's probably not possible since you'd have to pass a gigantic array into setTrustedContracts
+        if (obj.contracts[_to]) {
+            return Result.REGISTERED_AND_MATCH;
         }
+
         return Result.REGISTERED_AND_NOT_MATCH;
-    }
-
-    // ===================SETTERS===================
-
-    function setTrustedContracts(bytes32 _domain, address[] memory _contracts) external override onlyDomainOwner(_domain) {
-        domainObjects[_domain].contracts = _contracts;
     }
 
     // ===================GETTERS===================
 
     function getDomainOwner(bytes32 _domain) external view override returns (address) {
         return domainObjects[_domain].owner;
-    }
-
-    function getTrustedContracts(bytes32 _domain) external view override returns (address[] memory) {
-        DomainObject memory obj = domainObjects[_domain];
-        require(obj.creationDate != 0, "Domainoor: No such domain");
-        return obj.contracts;
     }
 }

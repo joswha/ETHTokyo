@@ -25,16 +25,11 @@ contract DomainoorTest is Test {
 
     function test_update_domain() public {
         setUp();
-        address[] memory contracts = domainoor.getTrustedContracts(DOMAIN_TEST);
-        assertEq(contracts.length, 0); // nothing verified yet
 
         // now try adding a trusted contract
         address[] memory addresses = new address[](1);
         addresses[0] = address(0x1234);
         domainoor.setTrustedContracts(DOMAIN_TEST, addresses);
-
-        contracts = domainoor.getTrustedContracts(DOMAIN_TEST);
-        assertEq(contracts.length, 1);
 
         // try checking
         require(domainoor.checkContract(DOMAIN_TEST, address(0x1234)) == iDomainoor.Result.REGISTERED_AND_MATCH,

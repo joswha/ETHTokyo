@@ -1,10 +1,9 @@
 pragma solidity ^0.8.13;
 
 interface iDomainoor {
-
     struct DomainObject {
         address owner;
-        address[] contracts;
+        mapping(address => bool) contracts;
         uint256 creationDate;
     }
 
@@ -14,12 +13,13 @@ interface iDomainoor {
         REGISTERED_AND_NOT_MATCH
     }
 
+    //////
      
     function setDomainOwner(bytes32 _domain, address _owner) external;
     function setTrustedContracts(bytes32 _domain, address[] memory _contracts) external;
-
-    function getDomainOwner(bytes32 _domain) external view returns (address);
-    function getTrustedContracts(bytes32 _domain) external view returns (address[] memory);
+    function setTrustedContract(bytes32 _domain, address _contract, bool _trusted) external;
     
     function checkContract(bytes32 _domain, address _to) external view returns (Result);
+
+    function getDomainOwner(bytes32 _domain) external view returns (address);
 }
