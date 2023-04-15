@@ -6,7 +6,7 @@ import "lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 
 contract Domainoor is iDomainoor, AccessControl {
         
-    mapping(bytes32 => DomainObject) public domainStorage;
+    mapping(bytes32 => DomainObject) public domainObjects;
     mapping(bytes32 => address) public domainOwner;
     uint256 public timelock;
     bytes32 public constant ENDPOINT_ROLE = "0x1337";
@@ -18,41 +18,51 @@ contract Domainoor is iDomainoor, AccessControl {
         _setRoleAdmin(ENDPOINT_ROLE, DEFAULT_ADMIN_ROLE);
     }
 
-    // ===================SETTERS===================
-    function setDomainOwner(bytes32 _domain, address _owner) external override returns (bool) {
+    // ===================ENDPOINT===================
+    function setDomainOwner(bytes32 _domain, address _owner) external override {
         require(hasRole(ENDPOINT_ROLE, msg.sender), "Domainoor: Not an endpoint");
         require(_owner != address(0), "Domainoor: Invalid address");
         // require(_domain.length == 32) ...
-        require(domainOwner[_domain] == address(0), "Domainoor: Domain already registered");
+        require(domainOwner[_domain] == address(0)
+            && domainObjects[_domain].creationDate == 0, "Domainoor: Domain already registered");
 
         domainOwner[_domain] = _owner;
-        return true;
+        domainObjects[_domain].creationDate = block.timestamp;
     }
 
-    function updateDomain(bytes32 _domain, address[] memory _contracts, uint256 _state) external override returns (bool) {
+    // ===================SETTERS===================
+    function setTrustedContracts(bytes32 _domain, address[] memory _contracts) external override {
         require(domainOwner[_domain] == msg.sender, "Domainoor: Not the domain owner");
-        require(_state < 3, "unsuported _state mutex");
+        domainObjects[_domain].contracts = _contracts;
+    }
 
-        // first call
-        if(domainStorage[_domain].creationDate == 0) {
-            domainStorage[_domain].creationDate = block.timestamp;
-        }
-
-        // update then contracts list if necessary
-        for(uint256 i = 0; i < _contracts.length; i++) {
-            require(_contracts[i] != address(0));
-
-            domainStorage[_domain].contracts.push(_contracts[i]);
-        }
-
-        // update the state if necessary
-        domainStorage[_domain].state = _state;
-        return true;
+    function setState(bytes32 _domain, uint256 _state) external override {
+        require(domainOwner[_domain] == msg.sender, "Domainoor: Not the domain owner");
+        require(_state < 3, "Domainoor: Unsuported _state mutex");
+        domainObjects[_domain].state = _state;
     }
 
     // ===================GETTERS===================
     function getDomainOwner(bytes32 _domain) external view override returns (address) {
         return domainOwner[_domain];
+    }
+
+    function getTrustedContracts(bytes32 _domain) external view override returns (address[] memory) {
+        DomainObject memory obj = domainObjects[_domain];
+        require(obj.creationDate != 0, "Domainoor: No such domain");
+        return obj.contracts;
+    }
+
+    function getState(bytes32 _domain) external view override returns (uint256) {
+        DomainObject memory obj = domainObjects[_domain];
+        require(obj.creationDate != 0, "Domainoor: No such domain");
+        return obj.state;
+    }
+
+    function getDomain(bytes32 _domain) external view override returns (address[] memory, uint256) {
+        DomainObject memory obj = domainObjects[_domain];
+        require(obj.creationDate != 0, "Domainoor: No such domain");
+        return (obj.contracts, obj.state);
     }
 
 }
