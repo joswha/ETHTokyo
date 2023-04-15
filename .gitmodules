@@ -4,3 +4,6 @@
 [submodule "lib/openzeppelin-contracts"]
 	path = lib/openzeppelin-contracts
 	url = https://github.com/openzeppelin/openzeppelin-contracts
+[submodule "fullstack"]
+	path = fullstack
+	url = https://github.com/0xNahhh/ETHTokyo-fullstack.git
