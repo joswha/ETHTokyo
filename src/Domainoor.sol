@@ -32,23 +32,38 @@ contract Domainoor is iDomainoor, AccessControl {
         bool isDomainOwner = obj.owner == msg.sender;
 
         if (isEndpoint) {
-            if (!isNewDomain) 
+            if (!isNewDomain) {
                 // Endpoint can only change domain owner if timelock is not expired
                 require(block.timestamp <= obj.creationDate + timelock, "Domainoor: Endpoint's timelock is expired");
-            else
+            } else {
                 // Endpoints can create new domains at any time.
                 // We need to mark that this domain has been created for the first time.
-                domainObjects[_domain].creationDate = block.timestamp;
-
+                obj.creationDate = block.timestamp;
+            }
         } else if (isDomainOwner) {
             // Domain owners can change the owner at any time.
             require(!isNewDomain, "Domainoor: No such domain"); // sanity check
-
         } else {
             revert("Domainoor: Not the domain owner or endpoint");
         }
 
-        domainObjects[_domain].owner = _owner;
+        obj.owner = _owner;
+    }
+
+    // ====================EVAL=====================
+
+    function checkContract(bytes32 _domain, address _to) external view override returns (Result) {
+        DomainObject memory obj = domainObjects[_domain];
+        if (obj.creationDate == 0) {
+            return Result.NOT_REGISTERED;
+        }
+
+        for (uint256 i = 0; i < obj.contracts.length; i++) {
+            if (obj.contracts[i] == _to) {
+                return Result.REGISTERED_AND_MATCH;
+            }
+        }
+        return Result.REGISTERED_AND_NOT_MATCH;
     }
 
     // ===================SETTERS===================
@@ -57,15 +72,10 @@ contract Domainoor is iDomainoor, AccessControl {
         domainObjects[_domain].contracts = _contracts;
     }
 
-    function setState(bytes32 _domain, uint256 _state) external override onlyDomainOwner(_domain) {
-        require(_state < 3, "Domainoor: Unsuported _state mutex");
-        domainObjects[_domain].state = _state;
-    }
-
     // ===================GETTERS===================
 
     function getDomainOwner(bytes32 _domain) external view override returns (address) {
-        return domainOwner[_domain];
+        return domainObjects[_domain].owner;
     }
 
     function getTrustedContracts(bytes32 _domain) external view override returns (address[] memory) {
@@ -73,17 +83,4 @@ contract Domainoor is iDomainoor, AccessControl {
         require(obj.creationDate != 0, "Domainoor: No such domain");
         return obj.contracts;
     }
-
-    function getState(bytes32 _domain) external view override returns (uint256) {
-        DomainObject memory obj = domainObjects[_domain];
-        require(obj.creationDate != 0, "Domainoor: No such domain");
-        return obj.state;
-    }
-
-    function getDomain(bytes32 _domain) external view override returns (address[] memory, uint256) {
-        DomainObject memory obj = domainObjects[_domain];
-        require(obj.creationDate != 0, "Domainoor: No such domain");
-        return (obj.contracts, obj.state);
-    }
-
 }

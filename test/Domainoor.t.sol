@@ -15,27 +15,33 @@ contract DomainoorTest is Test {
         domainoor.setDomainOwner(DOMAIN_TEST, address(this));
         address[] memory addresses;
         domainoor.setTrustedContracts(DOMAIN_TEST, addresses);
-        domainoor.setState(DOMAIN_TEST, 0);
     }
 
     function test_configure() public {
         setUp();
-        address owner = domainoor.domainOwner(DOMAIN_TEST);
+        address owner = domainoor.getDomainOwner(DOMAIN_TEST);
         assertEq(owner, address(this));
     }
 
     function test_update_domain() public {
-        (address[] memory contracts, uint256 state) = domainoor.getDomain(DOMAIN_TEST);
+        setUp();
+        address[] memory contracts = domainoor.getTrustedContracts(DOMAIN_TEST);
         assertEq(contracts.length, 0); // nothing verified yet
-        assertEq(state, 0); // default state
 
         // now try adding a trusted contract
         address[] memory addresses = new address[](1);
-        addresses[0] = address(this);
+        addresses[0] = address(0x1234);
         domainoor.setTrustedContracts(DOMAIN_TEST, addresses);
-        
-        (contracts, state) = domainoor.getDomain(DOMAIN_TEST);
+
+        contracts = domainoor.getTrustedContracts(DOMAIN_TEST);
         assertEq(contracts.length, 1);
-        assertEq(state, 0);
+
+        // try checking
+        require(domainoor.checkContract(DOMAIN_TEST, address(0x1234)) == iDomainoor.Result.REGISTERED_AND_MATCH,
+            "contract not verified but should be");
+        require(domainoor.checkContract(DOMAIN_TEST, address(0x12345678)) == iDomainoor.Result.REGISTERED_AND_NOT_MATCH,
+            "contract verified but should not be");
+        require(domainoor.checkContract("0x9999999", address(0x1234)) == iDomainoor.Result.NOT_REGISTERED,
+            "contract verified but should not be");
     }
 }

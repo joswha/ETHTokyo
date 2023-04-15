@@ -11,7 +11,7 @@ contract DomainoorScript is Script {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
-        Domainoor domainoor = new Domainoor();
+        //Domainoor domainoor = new Domainoor();
         
         vm.stopBroadcast();
     }
