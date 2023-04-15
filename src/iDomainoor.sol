@@ -3,8 +3,9 @@ pragma solidity ^0.8.13;
 interface iDomainoor {
 
     struct DomainObject {
+        address owner;
         address[] contracts;
-        uint256 state; // 0 - Unregistered, 1 - Registered, 2 - Suspended, 3 - Deleted
+        uint256 state; // 0 - Default, 1 - Possibly Compromised
         uint256 creationDate;
     }
      
