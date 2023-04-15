@@ -37,6 +37,6 @@ contract DomainoorTest is Test {
         require(domainoor.checkContract(DOMAIN_TEST, address(0x12345678)) == iDomainoor.Result.REGISTERED_AND_NOT_MATCH,
             "contract verified but should not be");
         require(domainoor.checkContract("0x9999999", address(0x1234)) == iDomainoor.Result.NOT_REGISTERED,
-            "contract verified but should not be");
+            "contract should not be verified but is");
     }
 }
