@@ -1,24 +1,25 @@
-pragma soidity ^0.8.13;
+pragma solidity ^0.8.13;
 
 import "./iDomainoor.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
+import "lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 
 contract Domainoor is iDomainoor, AccessControl {
         
     mapping(bytes32 => DomainObject) public domainStorage;
     mapping(bytes32 => address) public domainOwner;
     uint256 public timelock;
-    bytes32 public constant ENDPOINT_ROLE = 0x1337;
+    bytes32 public constant ENDPOINT_ROLE = "0x1337";
 
-    constructor(address _endpoint) {
+    constructor() {
         timelock = 1 days;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setupRole(ENDPOINT_ROLE, _endpoint);
+        _setupRole(ENDPOINT_ROLE, msg.sender);
+        _setRoleAdmin(ENDPOINT_ROLE, DEFAULT_ADMIN_ROLE);
     }
 
     // ===================SETTERS===================
-    function setDomainOwner(bytes32 memory _domain, address _owner) external override returns (bool) {
+    function setDomainOwner(bytes32 _domain, address _owner) external override returns (bool) {
         require(hasRole(ENDPOINT_ROLE, msg.sender), "Domainoor: Not an endpoint");
         require(_owner != address(0), "Domainoor: Invalid address");
         // require(_domain.length == 32) ...
@@ -28,7 +29,7 @@ contract Domainoor is iDomainoor, AccessControl {
         return true;
     }
 
-    function updateDomain(bytes32 memory _domain, address[] _contracts, uint256 _state) external override returns (bool) {
+    function updateDomain(bytes32 _domain, address[] memory _contracts, uint256 _state) external override returns (bool) {
         require(domainOwner[_domain] == msg.sender, "Domainoor: Not the domain owner");
         require(_state < 3, "unsuported _state mutex");
 
@@ -50,7 +51,7 @@ contract Domainoor is iDomainoor, AccessControl {
     }
 
     // ===================GETTERS===================
-    function getDomainOwner(bytes32 memory _domain) external view override returns (address) {
+    function getDomainOwner(bytes32 _domain) external view override returns (address) {
         return domainOwner[_domain];
     }
 

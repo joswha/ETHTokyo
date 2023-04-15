@@ -10,12 +10,13 @@ contract DomainoorTest is Test {
     bytes32 public constant DOMAIN_TEST = keccak256("uniswap.org");
 
     function setUp() public {
-        domainoor = new Domainoor(msg.sender);
-        domainoor.setDomainOwner(DOMAIN_TEST, msg.sender);
+        domainoor = new Domainoor();
+        domainoor.setDomainOwner(DOMAIN_TEST, address(this));
     }
 
     function test_configure() public {
-        
-        assertEq(counter.number(), 1);
+        setUp();
+        address owner = domainoor.domainOwner(DOMAIN_TEST);
+        assertEq(owner, address(this));
     }
 }

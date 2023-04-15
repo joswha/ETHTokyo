@@ -8,9 +8,9 @@ interface iDomainoor {
         uint256 creationDate;
     }
      
-    function setDomainOwner(bytes32 memory _domain, address _owner) external returns (bool);
-    function updateDomain(bytes32 memory _domain, DomainObject _domainDetails) external returns (bool);
-    function getDomainOwner(bytes32 memory _domain) external view returns (address);
+    function setDomainOwner(bytes32 _domain, address _owner) external returns (bool);
+    function updateDomain(bytes32 _domain, address[] memory _contracts, uint256 _state) external returns (bool);
+    function getDomainOwner(bytes32 _domain) external view returns (address);
     // function setTimelock(uint256 _timelock) external returns (bool);
     // function getTimelock() external view returns (uint256);
 }
